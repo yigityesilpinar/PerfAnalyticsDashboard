@@ -1,0 +1,7 @@
+dist
+build
+node_modules
+bundle_stats.json
+junit.xml
+jest-junit.xml
+.DS_Store

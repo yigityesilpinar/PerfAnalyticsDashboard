@@ -1,0 +1,7 @@
+node_modules/*
+**/*.generated.(j|t)sx?
+build/**
+dist/**
+.eslintrc.js
+*.d.ts
+jest.config.js
