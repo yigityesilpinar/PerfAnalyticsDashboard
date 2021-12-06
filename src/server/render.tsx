@@ -1,12 +1,13 @@
-import React from 'react'
-import { renderToString } from 'react-dom/server'
+import React, { ReactElement } from 'react'
+import { renderToStaticMarkup, renderToString } from 'react-dom/server'
 import { ServerStyleSheet } from 'styled-components'
 import { ChunkExtractor } from '@loadable/server'
 import { Request, Response } from 'express'
 import { StaticRouter } from 'react-router'
 import { Stats } from 'webpack'
-import { dependencies } from '../../package.json'
 
+import { dependencies } from '../../package.json'
+import config, { PassedToClient } from '../server/config'
 import Routes from '../routes'
 import { waitAndRequireStatsFile } from './utils'
 
@@ -17,8 +18,12 @@ const render = (stats: Stats) => async (req: Request, res: Response) => {
   const sheet = new ServerStyleSheet()
   let appStr = ''
   let styleTags = ''
-  let scriptTags = ''
+  let scriptTags: ReactElement[] = []
+  let linkTags: ReactElement[] = []
 
+  const passedToClient: PassedToClient = {
+    perfAnalyticsApi: config.get('perfAnalyticsApi')
+  }
   try {
     // for DevMode global.WEBPACK_STATS_PATH is replaced with absolute path on build time
     const extractorOptions = isDevMode ? await waitAndRequireStatsFile(global.WEBPACK_STATS_PATH) : { stats }
@@ -35,12 +40,11 @@ const render = (stats: Stats) => async (req: Request, res: Response) => {
     appStr = renderToString(jsx)
 
     // You can now collect your script tags
-    scriptTags = extractor.getScriptTags() // or extractor.getScriptElements();
+    scriptTags = extractor.getScriptElements() // or extractor.getScriptElements();
 
     // You can also collect your "preload/prefetch" links
-    // const linkTags = extractor.getLinkTags() // or extractor.getLinkElements();
+    linkTags = extractor.getLinkElements()
     // And you can even collect your style tags (if you use "mini-css-extract-plugin")
-    // styleTags = extractor.getStyleTags() // or extractor.getStyleElements();
     styleTags = sheet.getStyleTags()
   } catch (error) {
     // handle error
@@ -51,29 +55,30 @@ const render = (stats: Stats) => async (req: Request, res: Response) => {
   } finally {
     sheet.seal()
   }
-  res.send(`
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="UTF-8" />
-      ${styleTags}
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, shrink-to-fit=no"
-      />
-      <title>PerfAnalytics Dashboard</title>
-      <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;700;900&display=swap" rel="stylesheet">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/${dependencies.antd}/antd.css">
-    </head>
-    <body>
-      <div id="root">${appStr}</div>
-      <noscript>
-      You need to enable JavaScript to run this app.
-      </noscript>
-      ${scriptTags}
-    </body>
-  </html>
-`)
+  const html = renderToStaticMarkup(
+    <html>
+      <head>
+        <meta charSet="UTF-8" />
+        <style dangerouslySetInnerHTML={{ __html: styleTags }} />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <title>PerfAnalytics Dashboard</title>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;700;900&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href={`https://cdnjs.cloudflare.com/ajax/libs/antd/${dependencies.antd}/antd.css`} />
+        {linkTags}
+      </head>
+      <body>
+        <div id="root" dangerouslySetInnerHTML={{ __html: appStr }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.passedToClient=${JSON.stringify(passedToClient)}`
+          }}
+        />
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+      </body>
+      {scriptTags}
+    </html>
+  )
+  res.type('html').send(`<!DOCTYPE html>${html}`)
 }
 
 export default render

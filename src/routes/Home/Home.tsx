@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import moment, { Moment } from 'moment'
 import DatePicker from 'antd/lib/date-picker'
 
@@ -8,6 +8,9 @@ import Chart from 'src/components/Chart'
 import { RouteContainer, RouteContent } from 'src/routes/styles'
 import { isTouchScreen } from 'src/utils/responsiveness'
 
+import { PerformanceMetricsData } from './types'
+import { getScaleRules } from './utilts'
+import { MAX_ANALYTICS_QUERY_RANGE_IN_DAYS } from './config'
 import {
   AnalyticsContainer,
   Toolbar,
@@ -19,10 +22,24 @@ import {
   TotalText
 } from './styles'
 
-const MAX_ANALYTICS_QUERY_RANGE_IN_DAYS = 30
 const Home: React.FC = () => {
-  const [dateRange, setDateRange] = useState<[Moment, Moment]>([moment().startOf('day'), moment().endOf('day')])
+  const selectedAnalyticsAccountId = 1
+  const [dateRange, setDateRange] = useState<[Moment, Moment]>([moment().subtract(30, 'minutes'), moment()])
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetricsData[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  useEffect(() => {
+    setIsLoading(true)
+    fetch(
+      `${
+        window.passedToClient.perfAnalyticsApi
+      }/account/${selectedAnalyticsAccountId}/analytics?start=${dateRange[0].toISOString()}&end=${dateRange[1].toISOString()}`
+    )
+      .then((it) => it.json())
+      .then((res) => setPerformanceMetrics(res.data))
+      .finally(() => setIsLoading(false))
+  }, [dateRange])
 
+  const performanceMetricsLabels = performanceMetrics.map((it) => it.analyzeStartAt)
   return (
     <RouteContainer>
       <RouteContent>
@@ -83,6 +100,35 @@ const Home: React.FC = () => {
             },
             title: {
               text: 'Title'
+            }
+          }}
+        />
+      </ChartContainer>
+      <ChartContainer>
+        <Chart
+          type="line"
+          data={{
+            labels: performanceMetricsLabels || [],
+            datasets: [
+              {
+                label: 'TTFB',
+                data: performanceMetrics.map((it) => it.ttfb)
+              }
+            ]
+          }}
+          options={{
+            elements: {
+              point: {
+                radius: 1
+              }
+            },
+            scales: getScaleRules({
+              yAxesLabel: 'TTFB',
+              xAxesLabel: 'Time',
+              ySuggestedMax: Math.ceil(Math.max(...performanceMetrics.map((it) => it.ttfb)) * 1.1)
+            }),
+            title: {
+              text: 'TTFB'
             }
           }}
         />

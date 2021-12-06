@@ -67,7 +67,7 @@ const clientConfig: Configuration = {
     ...(isDevelopment ? [new webpack.HotModuleReplacementPlugin()] : []),
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
-      'CLIENT_BUILD': JSON.stringify(true)
+      CLIENT_BUILD: JSON.stringify(true)
     }),
     ...(isDevelopment ? [] : [new CompressionPlugin()]),
     ...(isDevelopment ? [] : [new BrotliPlugin() as unknown as WebpackPluginInstance]),

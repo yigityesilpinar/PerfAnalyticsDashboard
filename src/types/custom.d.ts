@@ -1,6 +1,9 @@
-declare module NodeJS {
-  interface Global {
-    WEBPACK_STATS_PATH: string
+import { PassedToClient } from '../server/config'
+
+declare global {
+  var WEBPACK_STATS_PATH: string
+  interface Window {
+    passedToClient: PassedToClient
   }
 }
 
