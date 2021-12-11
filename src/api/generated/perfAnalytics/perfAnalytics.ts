@@ -1,3 +1,24 @@
+export interface AnalyticsCreatePayload {
+  analyzeSessionUUID: string
+
+  /** @format date-time */
+  analyzeStartAt: string
+  ttfb: number
+  fcp: number
+  requestTime: number
+  responseTime: number
+  dnsLookUp: number
+  connectionTime: number
+  tlsTime: number
+  redirectTime: number
+  redirectCount: number
+  unloadTime: number
+  domInteractive: number
+  domComplete: number
+  domContentLoad: number
+  windowLoad: number
+}
+
 export interface AnalyticsDetailParams {
   /** The ISO Date string of the query range start. */
   start?: string
@@ -26,7 +47,16 @@ export interface AnalyticsDetailParams {
     | 'windowLoad'
 }
 
-export type ResourceAnalyticsCreatePayload = any[]
+export type ResourceAnalyticsCreatePayload = {
+  analyzeSessionUUID: string
+  analyzeStartAt: string
+  initiatorType: string
+  name: string
+  requestTime: number
+  responseTime: number
+  fetchTime: number
+  redirectTime: number
+}[]
 
 export interface ResourceAnalyticsDetailParams {
   /** The ISO Date string of the query range start. */
@@ -68,7 +98,7 @@ export namespace Account {
     export type RequestQuery = {}
     export type RequestBody = never
     export type RequestHeaders = {}
-    export type ResponseBody = { status?: string; data?: { data?: { id?: number; accountName?: string } } }
+    export type ResponseBody = { status: string; data: { data: { id: number; accountName: string } } }
   }
   /**
    * No description
@@ -79,7 +109,7 @@ export namespace Account {
   export namespace AnalyticsCreate {
     export type RequestParams = { id: number }
     export type RequestQuery = {}
-    export type RequestBody = any
+    export type RequestBody = AnalyticsCreatePayload
     export type RequestHeaders = {}
     export type ResponseBody = void
   }
@@ -386,7 +416,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/account/{perfAnalyticsId}
      */
     accountDetail: (perfAnalyticsId: string, params: RequestParams = {}) =>
-      this.request<{ status?: string; data?: { data?: { id?: number; accountName?: string } } }, any>({
+      this.request<{ status: string; data: { data: { id: number; accountName: string } } }, any>({
         path: `/account/${perfAnalyticsId}`,
         method: 'GET',
         format: 'json',
@@ -400,7 +430,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @summary Post analytics data for an account
      * @request POST:/account/{id}/analytics
      */
-    analyticsCreate: (id: number, data: any, params: RequestParams = {}) =>
+    analyticsCreate: (id: number, data: AnalyticsCreatePayload, params: RequestParams = {}) =>
       this.request<void, any>({
         path: `/account/${id}/analytics`,
         method: 'POST',
