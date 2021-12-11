@@ -10,7 +10,7 @@ export const SectionBody = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 0 4vw;
+  padding: 0 20px;
   margin-bottom: 20px;
 `
 

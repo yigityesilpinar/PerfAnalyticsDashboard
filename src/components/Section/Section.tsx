@@ -7,7 +7,7 @@ interface Props {
   title?: React.ReactNode
 }
 
-const Section: React.FC<Props> = ({ className, title, children, ...restTitleProps }) => (
+const Section: React.FC<Props> = ({ className, title, children }) => (
   <SectionContainer className={className}>
     {title}
     <SectionBody>{children}</SectionBody>

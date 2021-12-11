@@ -6,7 +6,6 @@ let STATS_CACHE = ''
 export const waitAndRequireStatsFile = (statsFilePath: string) =>
   new Promise<ChunkExtractorOptions>((resolve, reject) => {
     if (STATS_CACHE) {
-      // console.log('Serving Dev Stats From Cache')
       return resolve({
         stats: JSON.parse(STATS_CACHE),
       })
@@ -19,7 +18,6 @@ export const waitAndRequireStatsFile = (statsFilePath: string) =>
         clearInterval(interval)
         try {
           STATS_CACHE = fs.readFileSync(statsFilePath).toString()
-          // console.log('Serving FRESH  Dev Stats')
           resolve({
             stats: JSON.parse(STATS_CACHE),
           })

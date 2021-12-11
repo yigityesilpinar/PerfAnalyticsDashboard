@@ -2,10 +2,12 @@
 import express from 'express'
 import * as Sentry from '@sentry/node'
 import { version } from '../../package.json'
+import config from '../server/config'
 const expressStaticGzip = require('express-static-gzip')
 
 const isProd = process.env.NODE_ENV === 'production'
-const port = process.env.PORT || 9000
+const port = config.get('port')
+const host = config.get('host')
 const app = express()
 
 app.get('/version', (_req, res) => {
@@ -50,7 +52,7 @@ if (!isProd) {
   app.get('*', render(statsJSON))
 }
 
-app.listen(port, () => {
+app.listen(port,host, () => {
   // eslint-disable-next-line no-console
   console.log(`Server is listening on http://localhost:${port}`)
 })

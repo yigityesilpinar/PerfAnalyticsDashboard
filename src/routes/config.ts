@@ -13,10 +13,17 @@ interface LinkConfig extends RouteConfig {
 //! this config is used to map react-router routes, the order is important to match correct path
 const routes: RouteConfig[] = [
   {
-    path: '/',
-    component: loadable(() => import('src/routes/Home')),
+    path: '/analytics',
+    component: loadable(() => import('src/routes/Analytics')),
     exact: true,
-    displayName: 'Home',
+    displayName: 'Analytics',
+    navlinkPosition: 0
+  },
+  {
+    path: '/resourceAnalytics',
+    component: loadable(() => import('src/routes/ResourceAnalytics')),
+    exact: true,
+    displayName: 'Resource Analytics',
     navlinkPosition: 0
   }
 ]

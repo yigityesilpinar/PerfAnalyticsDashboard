@@ -6,7 +6,7 @@ import { Request, Response } from 'express'
 import { StaticRouter } from 'react-router'
 import { Stats } from 'webpack'
 
-import { dependencies } from '../../package.json'
+import packageJSON from '../../package.json'
 import config, { PassedToClient } from '../server/config'
 import Routes from '../routes'
 import { waitAndRequireStatsFile } from './utils'
@@ -63,7 +63,10 @@ const render = (stats: Stats) => async (req: Request, res: Response) => {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <title>PerfAnalytics Dashboard</title>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;700;900&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href={`https://cdnjs.cloudflare.com/ajax/libs/antd/${dependencies.antd}/antd.css`} />
+        <link
+          rel="stylesheet"
+          href={`https://cdnjs.cloudflare.com/ajax/libs/antd/${packageJSON.dependencies.antd}/antd.css`}
+        />
         {linkTags}
       </head>
       <body>

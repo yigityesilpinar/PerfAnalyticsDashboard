@@ -12,38 +12,34 @@ export const Container = styled.h4.attrs((props: Props) => ({
   ...props,
   as: getElemtypeForVariant(props.variant)
 }))<Props>`
-  color: ${(props) => props.theme.palette.text.main};
+  color: ${(props) => props.theme.palette.text.primary};
+  line-height: 1.2;
   margin: 0;
   ${(props) =>
     props.variant === 'h1' &&
     css`
-      font-size: max(2.7vw, 36px);
-      line-height: max(3.6vw, 48px);
-      font-weight: 900;
-      color: ${props.theme.palette.green.light};
+      font-size: max(1.2vw, 18px);
+      line-height: max(1.4vw, 20px);
+      font-weight: 700;
     `};
   ${(props) =>
     props.variant === 'h2' &&
     css`
-      font-size: 24px;
-      line-height: 24px;
-      font-weight: 300;
+      font-size: max(0.9vw, 15px);
+      font-weight: 500;
     `};
 
   ${(props) =>
     props.variant === 'body' &&
     css`
-      font-size: max(1.5vw, 20px);
-      line-height: max(2vw, 27px);
+      font-size: max(0.7vw, 13px);
       font-weight: 300;
     `};
 
   ${(props) =>
     props.variant === 'inputLabel' &&
     css`
-      font-weight: bold;
-      font-size: max(1.5vw, 20px);
-      line-height: max(2vw, 27px);
-      font-weight: 300;
+      font-size: max(0.7vw, 13px);
+      font-weight: 700;
     `};
 `

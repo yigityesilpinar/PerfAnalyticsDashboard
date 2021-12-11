@@ -26,7 +26,7 @@
     "@loadable/component": "5.15.0",
     "@loadable/server": "5.15.1",
     "@sentry/node": "6.15.0",
-    "antd": "4.17.2",
+    "antd": "4.17.3",
     "chart.js": "2.9.4",
     "cross-env": "7.0.3",
     "eslint-plugin-compat": "4.0.0",

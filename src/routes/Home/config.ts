@@ -1,1 +1,0 @@
-export const MAX_ANALYTICS_QUERY_RANGE_IN_DAYS = 30

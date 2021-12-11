@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import ChartJS, { ChartConfiguration } from 'chart.js'
 
-import { ChartContainer } from './styles'
+import { ChartWrapper, EmptyChartContainer } from './styles'
 
-interface Props extends ChartConfiguration {
-  onLabelClick?: (labelStr: string) => void
-}
+interface Props extends ChartConfiguration {}
 
 const Chart: React.FC<Props> = (chartProps) => {
-  const { onLabelClick, ...chartConfig } = chartProps
+  const { ...chartConfig } = chartProps
 
   const [chart, setCart] = useState<ChartJS>()
   const chartRef = useRef<HTMLCanvasElement>(null)
@@ -23,32 +21,6 @@ const Chart: React.FC<Props> = (chartProps) => {
           ...chartConfig,
           options: {
             ...chartConfig.options,
-            ...(onLabelClick
-              ? {
-                  onClick: (_, i) => {
-                    const e = i ? (i[0] as any) : undefined
-                    if (chartProps.data?.labels && e && '_index' in e) {
-                      const label = chartProps.data.labels[e._index]
-                      if (typeof label === 'string') {
-                        onLabelClick(label)
-                      }
-                    }
-                  },
-                  hover: {
-                    onHover(e) {
-                      const point = this.getElementAtEvent(e)
-                      const target = e.target as HTMLElement | undefined
-                      if (target) {
-                        if (point.length) {
-                          target.style.cursor = 'pointer'
-                        } else {
-                          target.style.cursor = 'default'
-                        }
-                      }
-                    }
-                  }
-                }
-              : {}),
             title: {
               fontFamily: 'Roboto',
               display:
@@ -72,10 +44,12 @@ const Chart: React.FC<Props> = (chartProps) => {
     }
   }, [chartProps])
 
+  const isEmptyChart = !chartConfig?.data?.labels?.length || chartConfig.data.labels.length === 0
   return (
-    <ChartContainer>
+    <ChartWrapper>
+      {isEmptyChart && <EmptyChartContainer>No data</EmptyChartContainer>}
       <canvas ref={chartRef} />
-    </ChartContainer>
+    </ChartWrapper>
   )
 }
 
