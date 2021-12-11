@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react'
 import moment, { Moment } from 'moment'
 import DatePicker from 'antd/lib/date-picker'
 import Select from 'antd/lib/select'
+import message from 'antd/lib/message'
 
+import { Api } from 'src/api/generated/perfAnalytics'
 import Chart, { getScaleRules } from 'src/components/Chart'
 import { isTouchScreen } from 'src/utils/responsiveness'
 import useSessionStorage from 'src/utils/useSessionStorage'
@@ -13,6 +15,7 @@ import Button from 'src/components/Button'
 import Totals from 'src/components/Totals'
 import Toolbar from 'src/components/Toolbar'
 
+import { AnalyticMetricResponse } from './types'
 import { getEventsCounts } from './utils'
 import {
   MAX_ANALYTICS_QUERY_RANGE_IN_DAYS,
@@ -20,7 +23,6 @@ import {
   initialDateRangeValue,
   selectedAnalyticsAccountId
 } from './config'
-
 
 const Analytics: React.FC = () => {
   const [refetchCount, setRefetchCount] = useState(0)
@@ -38,22 +40,36 @@ const Analytics: React.FC = () => {
       return initialDateRangeValue
     }
   })
-  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetricsData[]>([])
+  const [performanceMetrics, setPerformanceMetrics] = useState<AnalyticMetricResponse[]>([])
   const [selectedMetric, setSelectedMetric] = useSessionStorage({
     storageKey: 'perfAnalytics_stored_metric_name',
     initialValue: analyticMetrics[0]
   })
 
   useEffect(() => {
-    if (dateRange) {
+    if (dateRange && selectedMetric) {
       setIsLoading(true)
-      fetch(
-        `${
-          window.passedToClient.perfAnalyticsApi
-        }/account/${selectedAnalyticsAccountId}/analytics/${selectedMetric}?start=${dateRange[0].toISOString()}&end=${dateRange[1].toISOString()}`
-      )
-        .then((it) => it.json())
-        .then((res) => setPerformanceMetrics(res.data))
+      const api = new Api({
+        baseUrl: window.passedToClient.perfAnalyticsApi
+      })
+
+      api.account
+        .analyticsDetail({
+          id: selectedAnalyticsAccountId,
+          field: selectedMetric,
+          start: dateRange[0].toISOString(),
+          end: dateRange[1].toISOString()
+        })
+        .then((res) => {
+          if (res?.data?.data) {
+            setPerformanceMetrics(res.data.data)
+          }
+        })
+        .catch((err) => {
+          // eslint-disable-next-line no-console
+          console.error({ err })
+          message.error('We are having technical issue at the moment. Please try again later.')
+        })
         .finally(() => setIsLoading(false))
     }
   }, [dateRange, refetchCount, selectedMetric])
@@ -118,7 +134,7 @@ const Analytics: React.FC = () => {
               {
                 backgroundColor: analyticColors[analyticMetrics.indexOf(selectedMetric) % analyticColors.length],
                 label: makeHumanReadable(selectedMetric),
-                data: performanceMetrics.map((it) => selectedMetric && (it[selectedMetric] as number))
+                data: performanceMetrics.map((it) => it.value)
               }
             ]
           }}

@@ -1,8 +1,8 @@
-import { AnalyticMetric } from './types'
+import { AnalyticMetric, AnalyticMetricResponse } from './types'
 
 export const getEventsCounts: (options: {
   selectedMetric: AnalyticMetric | undefined
-  performanceMetrics: PerformanceMetricsData[]
+  performanceMetrics: AnalyticMetricResponse[]
 }) => {
   countMetric: number
   maxMetric: number
@@ -17,7 +17,7 @@ export const getEventsCounts: (options: {
       minMetric: NaN
     }
   } else {
-    const metricDataSet = performanceMetrics.map((it) => it[selectedMetric] as number)
+    const metricDataSet = performanceMetrics.map((it) => it.value)
     return {
       countMetric: metricDataSet.length,
       maxMetric: metricDataSet.length ? parseFloat(Math.max(...metricDataSet).toFixed(2)) : NaN,

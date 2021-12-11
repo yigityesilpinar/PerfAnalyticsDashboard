@@ -3,7 +3,8 @@ import {
   ExtendedResourceAnalyticMetric,
   ResourceAnalyticMetric,
   TypeAggregatedResourceAnalytics,
-  TypeAggregatedResourceMetricsData
+  ResourceAnalyticMetricResponse,
+  TypeAggregatedResourceMetricsResponse
 } from './types'
 
 export const isResourceAnalyticMetric = (
@@ -11,12 +12,12 @@ export const isResourceAnalyticMetric = (
 ): metric is ResourceAnalyticMetric =>
   !!metric && !typeAggregatedResourceAnalyticMetrics.includes(metric as TypeAggregatedResourceAnalytics)
 
-export const makeResourceAnalyticsMetric = (metric: TypeAggregatedResourceAnalytics): ResourceAnalyticMetric =>
-  metric.replace(/ByType$/, '') as ResourceAnalyticMetric
+export const makeResourceAnalyticsMetric = (metric: ExtendedResourceAnalyticMetric): Exclude<ResourceAnalyticMetric, 'initiatorType'> =>
+  metric.replace(/ByType$/, '') as Exclude<ResourceAnalyticMetric, 'initiatorType'>
 
 export const getEventsCounts: (options: {
   selectedMetric: ExtendedResourceAnalyticMetric | undefined
-  performanceMetrics: ResourceMetricsData[]
+  performanceMetrics: ResourceAnalyticMetricResponse[] | TypeAggregatedResourceMetricsResponse[]
 }) => {
   countMetric: number
   maxMetric: number
@@ -38,7 +39,7 @@ export const getEventsCounts: (options: {
       minMetric: NaN
     }
   } else if (isResourceAnalyticMetric(selectedMetric)) {
-    const metricDataSet = performanceMetrics.map((it) => it[selectedMetric] as number)
+    const metricDataSet = (performanceMetrics as ResourceAnalyticMetricResponse[]).map((it) => it.value)
     return {
       countMetric: metricDataSet.length,
       maxMetric: metricDataSet.length ? parseFloat(Math.max(...metricDataSet).toFixed(2)) : NaN,
@@ -48,7 +49,7 @@ export const getEventsCounts: (options: {
       minMetric: metricDataSet.length ? parseFloat(Math.min(...metricDataSet).toFixed(2)) : NaN
     }
   } else {
-    const metricDataSet = performanceMetrics as unknown as TypeAggregatedResourceMetricsData[]
+    const metricDataSet = performanceMetrics as TypeAggregatedResourceMetricsResponse[]
     return {
       countMetric: metricDataSet.length ? metricDataSet.reduce((acc, data) => acc + data.count, 0) : 0,
       maxMetric: metricDataSet.length ? parseFloat(Math.max(...metricDataSet.map((it) => it.max)).toFixed(2)) : NaN,

@@ -4,6 +4,7 @@ import DatePicker from 'antd/lib/date-picker'
 import message from 'antd/lib/message'
 import Select from 'antd/lib/select'
 
+import { Api } from 'src/api/generated/perfAnalytics'
 import Chart, { getScaleRules } from 'src/components/Chart'
 import { isTouchScreen } from 'src/utils/responsiveness'
 import useSessionStorage from 'src/utils/useSessionStorage'
@@ -15,13 +16,14 @@ import Button from 'src/components/Button'
 import Totals from 'src/components/Totals'
 import Toolbar from 'src/components/Toolbar'
 
-import { ResourceAnalyticMetric } from './types'
+import { ResourceAnalyticMetricResponse, TypeAggregatedResourceMetricsResponse } from './types'
 import { isResourceAnalyticMetric, makeResourceAnalyticsMetric, getEventsCounts } from './utils'
 import {
   MAX_ANALYTICS_QUERY_RANGE_IN_DAYS,
   resourceAnalyticMetrics,
   initialDateRangeValue,
-  selectedAnalyticsAccountId
+  selectedAnalyticsAccountId,
+  typeAggregatedResponseLabels
 } from './config'
 
 const ResourceAnalytics: React.FC = () => {
@@ -40,7 +42,10 @@ const ResourceAnalytics: React.FC = () => {
       return initialDateRangeValue
     }
   })
-  const [performanceMetrics, setPerformanceMetrics] = useState<ResourceMetricsData[]>([])
+  const [resourceAnalyticMetric, setResourceAnalyticMetric] = useState<ResourceAnalyticMetricResponse[]>([])
+  const [typeAggregatedResourceAnalyticMetric, setTypeAggregatedResourceAnalyticMetric] = useState<
+    TypeAggregatedResourceMetricsResponse[]
+  >([])
   const [selectedMetric, setSelectedMetric] = useSessionStorage({
     storageKey: 'perfAnalytics_stored_resource_metric_name',
     initialValue: resourceAnalyticMetrics[0]
@@ -49,34 +54,48 @@ const ResourceAnalytics: React.FC = () => {
   useEffect(() => {
     if (dateRange && selectedMetric) {
       setIsLoading(true)
-      fetch(
-        `${window.passedToClient.perfAnalyticsApi}/account/${selectedAnalyticsAccountId}/${
-          isResourceAnalyticMetric(selectedMetric) ? 'resourceAnalytics' : 'resourceAnalyticsByType'
-        }/${
-          isResourceAnalyticMetric(selectedMetric) ? selectedMetric : makeResourceAnalyticsMetric(selectedMetric)
-        }?start=${dateRange[0].toISOString()}&end=${dateRange[1].toISOString()}`
-      )
-        .then(async (res) => {
-          if (res.status >= 400) {
-            throw res.json()
-          } else {
-            return res.json()
-          }
-        })
-        .then((res) => {
-          setPerformanceMetrics(res.data)
-        })
-        .catch((err) => {
-          // eslint-disable-next-line no-console
-          console.error({ err })
-          message.error('We are having technical issue at the moment. Please try again later.')
-        })
-        .finally(() => setIsLoading(false))
+      const api = new Api({
+        baseUrl: window.passedToClient.perfAnalyticsApi
+      })
+
+      if (isResourceAnalyticMetric(selectedMetric)) {
+        api.account
+          .resourceAnalyticsDetail({
+            id: selectedAnalyticsAccountId,
+            field: selectedMetric,
+            start: dateRange[0].toISOString(),
+            end: dateRange[1].toISOString()
+          })
+          .then((res) => setResourceAnalyticMetric(res.data.data))
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error({ err })
+            message.error('We are having technical issue at the moment. Please try again later.')
+          })
+          .finally(() => setIsLoading(false))
+      } else {
+        api.account
+          .resourceAnalyticsByTypeDetail({
+            id: selectedAnalyticsAccountId,
+            field: makeResourceAnalyticsMetric(selectedMetric),
+            start: dateRange[0].toISOString(),
+            end: dateRange[1].toISOString()
+          })
+          .then((res) => setTypeAggregatedResourceAnalyticMetric(res.data.data))
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error({ err })
+            message.error('We are having technical issue at the moment. Please try again later.')
+          })
+          .finally(() => setIsLoading(false))
+      }
     }
   }, [dateRange, refetchCount, selectedMetric])
 
   const { countMetric, maxMetric, minMetric, avgMetric } = getEventsCounts({
-    performanceMetrics,
+    performanceMetrics: isResourceAnalyticMetric(selectedMetric)
+      ? resourceAnalyticMetric
+      : typeAggregatedResourceAnalyticMetric,
     selectedMetric
   })
   return (
@@ -129,15 +148,15 @@ const ResourceAnalytics: React.FC = () => {
         <Chart
           type="bar"
           data={{
-            labels: makeUnique(performanceMetrics.map((it) => it.initiatorType)),
+            labels: makeUnique(resourceAnalyticMetric.map((it) => it.value)),
             datasets: [
               {
                 label: 'initiatorType',
                 backgroundColor: analyticColors,
                 data:
                   selectedMetric === 'initiatorType'
-                    ? makeUnique(performanceMetrics.map((it) => it.initiatorType)).map(
-                        (i) => performanceMetrics.filter((p) => p.initiatorType === i).length
+                    ? makeUnique(resourceAnalyticMetric.map((it) => it.value)).map(
+                        (i) => resourceAnalyticMetric.filter((p) => p.value === i).length
                       )
                     : []
               }
@@ -164,13 +183,13 @@ const ResourceAnalytics: React.FC = () => {
             <Chart
               type="line"
               data={{
-                labels: performanceMetrics.map((it) => moment(it.analyzeStartAt).format('DD.MM.YY HH:mm')) || [],
+                labels: resourceAnalyticMetric.map((it) => moment(it.analyzeStartAt).format('DD.MM.YY HH:mm')) || [],
                 datasets: [
                   {
                     backgroundColor:
                       analyticColors[resourceAnalyticMetrics.indexOf(selectedMetric) % analyticColors.length],
                     label: makeHumanReadable(selectedMetric),
-                    data: performanceMetrics.map((it) => it[selectedMetric] as number)
+                    data: resourceAnalyticMetric.map((it) => it.value)
                   }
                 ]
               }}
@@ -194,11 +213,11 @@ const ResourceAnalytics: React.FC = () => {
             <Chart
               type="bar"
               data={{
-                labels: performanceMetrics.map((it) => it['initiatorType']),
-                datasets: ['min', 'count', 'avg', 'max'].map((label, index) => ({
+                labels: typeAggregatedResourceAnalyticMetric.map((it) => it['initiatorType']),
+                datasets: typeAggregatedResponseLabels.map((label, index) => ({
                   backgroundColor: rotate(analyticColors, index),
                   label: makeHumanReadable(label),
-                  data: performanceMetrics.map((it) => it[label as ResourceAnalyticMetric] as number)
+                  data: typeAggregatedResourceAnalyticMetric.map((it) => it[label])
                 }))
               }}
               options={{

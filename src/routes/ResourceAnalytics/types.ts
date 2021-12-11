@@ -1,10 +1,4 @@
-export interface TypeAggregatedResourceMetricsData {
-  initiatorType: string
-  count: number
-  avg: number
-  max: number
-  min: number
-}
+import { Account } from 'src/api/generated/perfAnalytics'
 
 export type TypeAggregatedResourceAnalytics =
   | 'requestTimeByType'
@@ -12,6 +6,9 @@ export type TypeAggregatedResourceAnalytics =
   | 'fetchTimeByType'
   | 'redirectTimeByType'
 
-export type ResourceAnalyticMetric = keyof ResourceMetricsData
+export type TypeAggregatedResourceMetricsResponse = Account.ResourceAnalyticsByTypeDetail.ResponseBody['data'][number]
+export type ResourceAnalyticMetricResponse = Account.ResourceAnalyticsDetail.ResponseBody['data'][number]
+
+export type ResourceAnalyticMetric = Account.ResourceAnalyticsDetail.RequestParams['field']
 
 export type ExtendedResourceAnalyticMetric = ResourceAnalyticMetric | TypeAggregatedResourceAnalytics
