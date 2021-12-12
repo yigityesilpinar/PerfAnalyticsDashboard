@@ -6,3 +6,4 @@ dist/**
 *.d.ts
 jest.config.js
 src/api/generated/**
+ecosystem.config.js

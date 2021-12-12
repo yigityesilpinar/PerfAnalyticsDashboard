@@ -41,14 +41,14 @@ if (!isProd) {
   app.use(Sentry.Handlers.requestHandler())
   app.use(Sentry.Handlers.errorHandler())
   app.use(
-    expressStaticGzip('build', {
+    expressStaticGzip('dist', {
       enableBrotli: true,
       orderPreference: ['br']
     })
   )
   const render = require('./render').default
   // for production read once at server start
-  const statsJSON = require('../../build/loadable-stats.json')
+  const statsJSON = require('../../dist/loadable-stats.json')
   app.get('*', render(statsJSON))
 }
 
