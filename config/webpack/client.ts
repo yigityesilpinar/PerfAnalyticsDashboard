@@ -4,6 +4,7 @@ import path from 'path'
 import CompressionPlugin from 'compression-webpack-plugin'
 import BrotliPlugin from 'brotli-webpack-plugin'
 import LoadablePlugin from '@loadable/webpack-plugin'
+import CopyPlugin from 'copy-webpack-plugin'
 
 import { OUTPUT_DIR, SRC_PATH, PROJECT_ROOT_DIR } from '../paths'
 
@@ -71,7 +72,10 @@ const clientConfig: Configuration = {
     }),
     ...(isDevelopment ? [] : [new CompressionPlugin()]),
     ...(isDevelopment ? [] : [new BrotliPlugin() as unknown as WebpackPluginInstance]),
-    new LoadablePlugin({ writeToDisk: true }) as unknown as WebpackPluginInstance
+    new LoadablePlugin({ writeToDisk: true }) as unknown as WebpackPluginInstance,
+    new CopyPlugin({
+      patterns: [{ from: 'node_modules/@yigitysl/perfanalyticsjs/dist/PerfAnalytics.js', to: 'PerfAnalytics.js' }]
+    })
   ],
   optimization: {
     splitChunks: {
